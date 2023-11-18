@@ -3,7 +3,7 @@ import './App.css';
 function App() {
   return (
     <div className="App">
-      <h1 style={{ fontSize: 80, color: 'green'  }}>Hello Pradyumna !</h1>
+      <h1 style={{ fontSize: 80, color: 'red'  }}>Hello Pradyumna !</h1>
     </div>
   );
 }
