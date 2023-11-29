@@ -113,7 +113,8 @@ The project setup described to automate the entire workflow, from the developmen
 
 # OUTPUT
 
-![Screenshot 2023-11-29 180928](https://github.com/Pradyumna018/Todo-List-App-Deployment-Using-GitHub-Action-CICD/assets/136186419/2fc26ccd-dd3c-4449-a804-47244cec4df9)
+![Screenshot 2023-11-29 225733](https://github.com/Pradyumna018/React-Application-Deployment-Using-Docker-on-AWS-ElassticBeanStack/assets/136186419/0e3a96b4-3d3e-4fda-9751-c38c175cf110)
+
 
 # Thank You ❤️
 
