@@ -1,70 +1,122 @@
-# Getting Started with Create React App
+# Complete CI/CD with GitHub Actions for React application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Note: For this project, we will use the "Ubuntu" machine. Commands may be different if you are using a different OS.
 
-## Available Scripts
+# Step 1 : Let's create a simple React application
 
-In the project directory, you can run:
+```
+npx create-react-app my-app
+cd my-app
+npm start
+```
+Then open http://localhost:3000/ to see your app.
 
-### `npm start`
+# Step 2 : Clone the source code
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+If you are using Ubuntu Machine, Git will be pre-installed. Clone the repository by using 'git clone' command and move into there.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+We shall only work in the same directory for the duration of this project. The reason you will understand at last stage.
 
-### `npm test`
+```
+git clone https://github.com/Pradyumna018/Todo-List-App-Deployment-Using-GitHub-Action-CICD.git
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+# Step 3 : Create a Multi-Stage Dockerfile for our application
 
-### `npm run build`
+Now, let's understand the requirement first. We require node to be installed and running in the background in order to run the react application.. Also, we will need nginx to serve the requests which will help us to access the application after deploying in EB.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Write a Dockerfile with the following code:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+FROM node:14-alpine as builder
+WORKDIR /app 
+COPY package.json . 
+RUN npm install 
+COPY . . 
+RUN npm run build
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+FROM nginx 
+EXPOSE 80 
+COPY --from=builder /app/build /usr/share/nginx/html
 
-### `npm run eject`
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Explanation :
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+This Dockerfile has two stages. The first stage builds a web application with NPM using the official Node.js 14 Alpine image. The second stage serves the constructed web application on port 80 using the official NGINX image. The built application files from the first stage are copied to the second stage, which is the final image, that can be used to run the web application in a Docker container.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Step 4 : Create a docker-compose.yml file
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Write a docker-compose.yml with the following code:
 
-## Learn More
+```
+version: '3'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '80:80'
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Step 5 : Create .github/workflows directory
+## And inside this directory create one file which is deploy.yml
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Write deploy.yml with the following code:
 
-### Code Splitting
+```
+name: Deploy React to AWS
+on:
+  push:
+    branches:
+      - "main"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
 
-### Analyzing the Bundle Size
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: react-app1
+          environment_name: React-app-env-1
+          version_label: ${{ github.sha }}
+          existing_bucket_name: elasticbeanstalk-us-east-1-691097374572
+          region: us-east-1
+          deployment_package: deploy.zip
+```
 
-### Making a Progressive Web App
+# Step 6 : Configure Elastic BeanStalk
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+* Go to the AWS Elastic BeanStalk Service.
+* Click on "Create Application"
+* Provide the details such as Name = "<Any name>", Platform = "Docker"
+* Add Service role
+* Select default VPC
+* Now Click on "Create Application" 
 
-### Advanced Configuration
+# Step 7 : Now Push all your code to Github Repo.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+# Conclusion:
 
-### Deployment
+The project setup described to automate the entire workflow, from the development phase through to deployment. This setup encourages collaboration among team members and ensures consistency throughout the development and deployment processes. It is designed to facilitate a smooth and efficient workflow.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
 
-### `npm run build` fails to minify
+# OUTPUT
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+![Screenshot 2023-11-29 180928](https://github.com/Pradyumna018/Todo-List-App-Deployment-Using-GitHub-Action-CICD/assets/136186419/2fc26ccd-dd3c-4449-a804-47244cec4df9)
+
+# Thank You ❤️
+
+
+
+
